@@ -27,9 +27,7 @@
 namespace orb_tracker
 {
 
-System::System(const string &strVocFile, const string &strSettingsFile)
-              :mbReset(false),mbActivateLocalizationMode(false),
-        mbDeactivateLocalizationMode(false)
+System::System(const string &strVocFile, const string &strSettingsFile) : mbReset(false)
 {
     // Output welcome message
     cout << endl <<
@@ -76,53 +74,17 @@ System::System(const string &strVocFile, const string &strSettingsFile)
 
 cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
 {
-    // Check mode change
-    {
-        unique_lock<mutex> lock(mMutexMode);
-        if(mbActivateLocalizationMode)
-        {
-            mpLocalMapper->RequestStop();
-
-            // Wait until Local Mapping has effectively stopped
-            while(!mpLocalMapper->isStopped())
-            {
-                usleep(1000);
-            }
-
-            mpTracker->InformOnlyTracking(true);
-            mbActivateLocalizationMode = false;
-        }
-        if(mbDeactivateLocalizationMode)
-        {
-            mpTracker->InformOnlyTracking(false);
-            mpLocalMapper->Release();
-            mbDeactivateLocalizationMode = false;
-        }
-    }
-
     // Check reset
     {
-    unique_lock<mutex> lock(mMutexReset);
-    if(mbReset)
-    {
-        mpTracker->Reset();
-        mbReset = false;
-    }
+        unique_lock<mutex> lock(mMutexReset);
+        if(mbReset)
+        {
+            mpTracker->Reset();
+            mbReset = false;
+        }
     }
 
     return mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
-}
-
-void System::ActivateLocalizationMode()
-{
-    unique_lock<mutex> lock(mMutexMode);
-    mbActivateLocalizationMode = true;
-}
-
-void System::DeactivateLocalizationMode()
-{
-    unique_lock<mutex> lock(mMutexMode);
-    mbDeactivateLocalizationMode = true;
 }
 
 void System::Reset()

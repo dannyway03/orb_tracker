@@ -49,6 +49,7 @@ public:
     // Thread Synch
     void RequestStop();
     void RequestReset();
+    bool isReset();
     bool Stop();
     void Release();
     bool isStopped();

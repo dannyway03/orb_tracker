@@ -108,6 +108,10 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr& msgLeft,const se
 
     cv::Mat Tcw = mpSLAM->TrackStereo(cv_ptrLeft->image,cv_ptrRight->image,cv_ptrLeft->header.stamp.toSec());
 
+    // Check system got lost...
+    if (Tcw.rows == 0 || Tcw.cols == 0)
+        Tcw = cv::Mat::eye(4,4,Tcw.type());
+
     if (mpPosePub.getNumSubscribers() > 0)
     {
         // Convert to TF

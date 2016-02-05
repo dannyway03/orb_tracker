@@ -51,12 +51,6 @@ public:
     // Returns the camera pose (empty if tracking fails).
     cv::Mat TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp);
 
-    // This stops local mapping thread (map building) and performs only camera tracking.
-    void ActivateLocalizationMode();
-
-    // This resumes local mapping thread and performs SLAM again.
-    void DeactivateLocalizationMode();
-
     // Reset the system (clear map)
     void Reset();
 
@@ -88,11 +82,6 @@ private:
     // Reset flag
     std::mutex mMutexReset;
     bool mbReset;
-
-    // Change mode flags
-    std::mutex mMutexMode;
-    bool mbActivateLocalizationMode;
-    bool mbDeactivateLocalizationMode;
 };
 
 }// namespace orb_tracker

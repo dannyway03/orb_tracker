@@ -52,15 +52,10 @@ public:
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
 
-    // Use this function if you have deactivated local mapping and you only want to localize the camera.
-    void InformOnlyTracking(const bool &flag);
-
-
 public:
 
     // Tracking states
     enum eTrackingState{
-        SYSTEM_NOT_READY=-1,
         NO_IMAGES_YET=0,
         NOT_INITIALIZED=1,
         OK=2,
@@ -80,9 +75,6 @@ public:
     list<KeyFrame*> mlpReferences;
     list<double> mlFrameTimes;
     list<bool> mlbLost;
-
-    // True if local mapping is deactivated and we are performing only localization
-    bool mbOnlyTracking;
 
     void Reset();
 
@@ -108,12 +100,6 @@ protected:
 
     bool NeedNewKeyFrame();
     void CreateNewKeyFrame();
-
-    // In case of performing only localization, this flag is true when there are no matches to
-    // points in the map. Still tracking will continue if there are enough matches with temporal points.
-    // In that case we are doing visual odometry. The system will try to do relocalization to recover
-    // "zero-drift" localization to the map.
-    bool mbVO;
 
     //Other Thread Pointers
     LocalMapping* mpLocalMapper;

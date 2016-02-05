@@ -676,16 +676,6 @@ void LocalMapping::RequestReset()
         unique_lock<mutex> lock(mMutexReset);
         mbResetRequested = true;
     }
-
-    while(1)
-    {
-        {
-            unique_lock<mutex> lock2(mMutexReset);
-            if(!mbResetRequested)
-                break;
-        }
-        usleep(3000);
-    }
 }
 
 void LocalMapping::ResetIfRequested()
@@ -697,6 +687,16 @@ void LocalMapping::ResetIfRequested()
         mlpRecentAddedMapPoints.clear();
         mbResetRequested=false;
     }
+}
+
+bool LocalMapping::isReset()
+{
+    bool tmp;
+    {
+        unique_lock<mutex> lock(mMutexReset);
+        tmp = mbResetRequested;
+    }
+    return tmp;
 }
 
 void LocalMapping::RequestFinish()

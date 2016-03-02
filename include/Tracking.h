@@ -45,12 +45,14 @@ class Tracking
 {
 
 public:
-    Tracking(ORBVocabulary* pVoc, Map* pMap, const string &strSettingPath);
+    Tracking(ORBVocabulary* pVoc, Map* pMap);
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
-    cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
+    cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp, float &altitude);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
+
+    void SetParams(cv::Mat K, float baseline, bool pub_range);
 
 public:
 
@@ -124,6 +126,10 @@ protected:
     cv::Mat mDistCoef;
     float mbf;
 
+    // Publish range data
+    bool pub_range_;
+    float altitude_;
+
     //New KeyFrame rules (according to fps)
     int mMinFrames;
     int mMaxFrames;
@@ -149,6 +155,7 @@ protected:
     bool mbRGB;
 
     list<MapPoint*> mlpTemporalPoints;
+
 };
 
 } //namespace orb_tracker

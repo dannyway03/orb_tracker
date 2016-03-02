@@ -44,12 +44,15 @@ class System
 public:
 
     // Initialize the SLAM system. It launches the Local Mapping and Loop Closing threads.
-    System(const string &strVocFile, const string &strSettingsFile);
+    System(const string &strVocFile);
 
     // Proccess the given stereo frame. Images must be synchronized and rectified.
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
-    cv::Mat TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp);
+    cv::Mat TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, float &altitude);
+
+    // Set tracker params
+    void SetTrackerParams(cv::Mat K, float baseline, bool pub_range);
 
     // Reset the system (clear map)
     void Reset();

@@ -41,90 +41,47 @@ using namespace std;
 namespace orb_tracker
 {
 
-Tracking::Tracking(ORBVocabulary* pVoc, Map *pMap, const string &strSettingPath):
-    mState(NO_IMAGES_YET), mpORBVocabulary(pVoc), mpMap(pMap), mnLastRelocFrameId(0)
+Tracking::Tracking(ORBVocabulary* pVoc, Map *pMap):
+    mState(NO_IMAGES_YET), mpORBVocabulary(pVoc), mpMap(pMap), pub_range_(false), mnLastRelocFrameId(0)
+{}
+
+void Tracking::SetParams(cv::Mat K, float baseline, bool pub_range)
 {
-    // Load camera parameters from settings file
-
-    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-    float fx = fSettings["Camera.fx"];
-    float fy = fSettings["Camera.fy"];
-    float cx = fSettings["Camera.cx"];
-    float cy = fSettings["Camera.cy"];
-
-    cv::Mat K = cv::Mat::eye(3,3,CV_32F);
-    K.at<float>(0,0) = fx;
-    K.at<float>(1,1) = fy;
-    K.at<float>(0,2) = cx;
-    K.at<float>(1,2) = cy;
+    // Camera matrix
     K.copyTo(mK);
 
+    // Distortion coefficients: zero -> images are rectified
     cv::Mat DistCoef(4,1,CV_32F);
-    DistCoef.at<float>(0) = fSettings["Camera.k1"];
-    DistCoef.at<float>(1) = fSettings["Camera.k2"];
-    DistCoef.at<float>(2) = fSettings["Camera.p1"];
-    DistCoef.at<float>(3) = fSettings["Camera.p2"];
-    const float k3 = fSettings["Camera.k3"];
-    if(k3!=0)
-    {
-        DistCoef.resize(5);
-        DistCoef.at<float>(4) = k3;
-    }
+    DistCoef.at<float>(0) = 0.0;
+    DistCoef.at<float>(1) = 0.0;
+    DistCoef.at<float>(2) = 0.0;
+    DistCoef.at<float>(3) = 0.0;
     DistCoef.copyTo(mDistCoef);
 
-    mbf = fSettings["Camera.bf"];
-
-    float fps = fSettings["Camera.fps"];
-    if(fps==0)
-        fps=30;
+    // Baseline
+    mbf = baseline;
 
     // Max/Min Frames to insert keyframes and to check relocalisation
     mMinFrames = 0;
-    mMaxFrames = fps;
+    mMaxFrames = 10;
 
-    cout << endl << "Camera Parameters: " << endl;
-    cout << "- fx: " << fx << endl;
-    cout << "- fy: " << fy << endl;
-    cout << "- cx: " << cx << endl;
-    cout << "- cy: " << cy << endl;
-    cout << "- k1: " << DistCoef.at<float>(0) << endl;
-    cout << "- k2: " << DistCoef.at<float>(1) << endl;
-    if(DistCoef.rows==5)
-        cout << "- k3: " << DistCoef.at<float>(4) << endl;
-    cout << "- p1: " << DistCoef.at<float>(2) << endl;
-    cout << "- p2: " << DistCoef.at<float>(3) << endl;
-    cout << "- fps: " << fps << endl;
+    // Depth limits
+    mThDepth = mbf*50.0/mK.at<float>(0,0);
 
+    // Colorspace
+    mbRGB = 1;
 
-    int nRGB = fSettings["Camera.RGB"];
-    mbRGB = nRGB;
-
-    if(mbRGB)
-        cout << "- color order: RGB (ignored if grayscale)" << endl;
-    else
-        cout << "- color order: BGR (ignored if grayscale)" << endl;
-
-    // Load ORB parameters
-
-    int nFeatures = fSettings["ORBextractor.nFeatures"];
-    float fScaleFactor = fSettings["ORBextractor.scaleFactor"];
-    int nLevels = fSettings["ORBextractor.nLevels"];
-    int fIniThFAST = fSettings["ORBextractor.iniThFAST"];
-    int fMinThFAST = fSettings["ORBextractor.minThFAST"];
-
+    // ORB parameters
+    int nFeatures = 2000;
+    float fScaleFactor = 1.2;
+    int nLevels = 8;
+    int fIniThFAST = 20;
+    int fMinThFAST = 7;
     mpORBextractorLeft = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
     mpORBextractorRight = new ORBextractor(nFeatures,fScaleFactor,nLevels,fIniThFAST,fMinThFAST);
 
-    cout << endl  << "ORB Extractor Parameters: " << endl;
-    cout << "- Number of Features: " << nFeatures << endl;
-    cout << "- Scale Levels: " << nLevels << endl;
-    cout << "- Scale Factor: " << fScaleFactor << endl;
-    cout << "- Initial Fast Threshold: " << fIniThFAST << endl;
-    cout << "- Minimum Fast Threshold: " << fMinThFAST << endl;
-
-    mThDepth = mbf*(float)fSettings["ThDepth"]/fx;
-    cout << endl << "Depth Threshold (Close/Far Points): " << mThDepth << endl;
-
+    // Publish range?
+    pub_range_ = pub_range;
 }
 
 void Tracking::SetLocalMapper(LocalMapping *pLocalMapper)
@@ -133,7 +90,7 @@ void Tracking::SetLocalMapper(LocalMapping *pLocalMapper)
 }
 
 
-cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
+cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, float &altitude)
 {
     mImGray = imRectLeft;
     cv::Mat imGrayRight = imRectRight;
@@ -169,6 +126,7 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
 
     Track();
 
+    altitude = altitude_;
     return mCurrentFrame.mTcw.clone();
 }
 
@@ -214,7 +172,7 @@ void Tracking::Track()
         else if (mState==LOST)
         {
             // Reset the system and return
-            cout << "Track got lost. Reseting the system..." << endl;
+            cout << "[ORB_TRACKER:] Track got lost. Reseting the system..." << endl;
             Reset();
             return;
         }
@@ -344,7 +302,7 @@ void Tracking::StereoInitialization()
             }
         }
 
-        cout << "New map created with " << mpMap->MapPointsInMap() << " points" << endl;
+        cout << "[ORB_TRACKER:] New map created with " << mpMap->MapPointsInMap() << " points" << endl;
 
         mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -558,21 +516,37 @@ bool Tracking::TrackLocalMap()
     mnMatchesInliers = 0;
 
     // Update MapPoints Statistics
+    vector<float> altitude;
     for(int i=0; i<mCurrentFrame.N; i++)
     {
         if(mCurrentFrame.mvpMapPoints[i])
         {
             if(!mCurrentFrame.mvbOutlier[i])
             {
+                if (pub_range_)
+                {
+                    MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
+                    cv::Mat Ow = mCurrentFrame.GetCameraCenter();
+                    cv::Mat point = pMP->GetWorldPos() - Ow;
+                    altitude.push_back(point.at<float>(2));
+                }
+
                 mCurrentFrame.mvpMapPoints[i]->IncreaseFound();
                 if(mCurrentFrame.mvpMapPoints[i]->Observations()>0)
                     mnMatchesInliers++;
             }
             else
                 mCurrentFrame.mvpMapPoints[i] = static_cast<MapPoint*>(NULL);
-
         }
     }
+
+    if (altitude.size() > 0)
+    {
+        float sum = std::accumulate(altitude.begin(), altitude.end(), 0.0);
+        altitude_ = sum/altitude.size();
+    }
+    else
+        altitude_ = -1.0;
 
     // Decide if the tracking was succesful
     // More restrictive if there was a relocalization recently
@@ -939,14 +913,14 @@ void Tracking::UpdateLocalKeyFrames()
 
 void Tracking::Reset()
 {
-    cout << "System Reseting" << endl;
+    cout << "[ORB_TRACKER:] System Reseting" << endl;
 
     // Reset Local Mapping
-    cout << "Waiting for Local Mapper Reset...";
+    cout << "[ORB_TRACKER:] Waiting for Local Mapper Reset...";
     bool notReset = mpLocalMapper->isReset();
     if(notReset)
         return;
-    cout << " done" << endl;
+    cout << "[ORB_TRACKER:] Done!" << endl;
 
     // Clear Map (this erase MapPoints and KeyFrames)
     mpMap->clear();

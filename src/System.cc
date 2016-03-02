@@ -27,7 +27,7 @@
 namespace orb_tracker
 {
 
-System::System(const string &strVocFile, const string &strSettingsFile) : mbReset(false)
+System::System(const string &strVocFile) : mbReset(false)
 {
     // Output welcome message
     cout << endl <<
@@ -36,32 +36,24 @@ System::System(const string &strVocFile, const string &strSettingsFile) : mbRese
     "This is free software, and you are welcome to redistribute it" << endl <<
     "under certain conditions. See LICENSE.txt." << endl << endl;
 
-    //Check settings file
-    cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
-    if(!fsSettings.isOpened())
-    {
-       cerr << "Failed to open settings file at: " << strSettingsFile << endl;
-       exit(-1);
-    }
-
     // Load ORB Vocabulary
     mpVocabulary = new ORBVocabulary();
-    cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
+    cout << endl << "[ORB_TRACKER:] Loading ORB Vocabulary. This could take a while..." << endl;
     bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
     if(!bVocLoad)
     {
-        cerr << "Wrong path to vocabulary. " << endl;
-        cerr << "Falied to open at: " << strVocFile << endl;
+        cerr << "[ORB_TRACKER:] Wrong path to vocabulary. " << endl;
+        cerr << "[ORB_TRACKER:] Falied to open at: " << strVocFile << endl;
         exit(-1);
     }
-    cout << "Vocabulary loaded!" << endl << endl;
+    cout << "[ORB_TRACKER:] Vocabulary loaded!" << endl << endl;
 
     //Create the Map
     mpMap = new Map();
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
-    mpTracker = new Tracking(mpVocabulary, mpMap, strSettingsFile);
+    mpTracker = new Tracking(mpVocabulary, mpMap);
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap);
@@ -72,7 +64,12 @@ System::System(const string &strVocFile, const string &strSettingsFile) : mbRese
     mpLocalMapper->SetTracker(mpTracker);
 }
 
-cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp)
+void System::SetTrackerParams(cv::Mat K, float baseline, bool pub_range)
+{
+    mpTracker->SetParams(K, baseline, pub_range);
+}
+
+cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, float &altitude)
 {
     // Check reset
     {
@@ -84,7 +81,7 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const
         }
     }
 
-    return mpTracker->GrabImageStereo(imLeft,imRight,timestamp);
+    return mpTracker->GrabImageStereo(imLeft,imRight,timestamp,altitude);
 }
 
 void System::Reset()

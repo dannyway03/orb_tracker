@@ -5,8 +5,10 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   image_transport
+  image_geometry
   message_filters
   cv_bridge
+  tf
   cmake_modules)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")

@@ -205,6 +205,15 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
     {
         // System got lost
         is_pose_init_ = false;
+
+        // Publish an invalid altitude
+        sensor_msgs::Range range_msg;
+        range_msg.header = cv_ptr_left->header;
+        range_msg.min_range = min_range_;
+        range_msg.max_range = max_range_;
+        range_msg.field_of_view = 60.0/180.0*M_PI;
+        range_msg.range = -1.0;
+        range_pub_.publish(range_msg);
     }
     else
     {
@@ -248,7 +257,8 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             if (twist_pub_.getNumSubscribers() > 0)
             {
                 geometry_msgs::TwistWithCovarianceStamped twist_msg;
-                twist_msg.header = cv_ptr_left->header;
+                twist_msg.header.stamp = cv_ptr_left->header.stamp;
+                twist_msg.header.frame_id = cv_ptr_left->header.frame_id;
                 twist_msg.twist.twist.linear.x = delta_transform.getOrigin().getX() / delta_t;
                 twist_msg.twist.twist.linear.y = delta_transform.getOrigin().getY() / delta_t;
                 twist_msg.twist.twist.linear.z = delta_transform.getOrigin().getZ() / delta_t;
@@ -265,7 +275,8 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             if (pose_pub_.getNumSubscribers() > 0)
             {
                 geometry_msgs::PoseStamped pose_msg;
-                pose_msg.header = cv_ptr_left->header;
+                pose_msg.header.stamp = cv_ptr_left->header.stamp;
+                pose_msg.header.frame_id = cv_ptr_left->header.frame_id;
                 tf::poseTFToMsg(integrated_pose_, pose_msg.pose);
                 pose_pub_.publish(pose_msg);
             }
@@ -274,16 +285,16 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             if (pub_range_ && range_pub_.getNumSubscribers() > 0)
             {
                 // Sanity checks
-                if (altitude > min_range_ && altitude < max_range_)
-                {
-                    sensor_msgs::Range range_msg;
-                    range_msg.header = cv_ptr_left->header;
-                    range_msg.min_range = min_range_;
-                    range_msg.max_range = max_range_;
-                    range_msg.field_of_view = 60.0/180.0*M_PI;
-                    range_msg.range = altitude;
-                    range_pub_.publish(range_msg);
-                }
+                if (altitude < min_range_ || altitude > max_range_)
+                    altitude = -1.0;
+
+                sensor_msgs::Range range_msg;
+                range_msg.header = cv_ptr_left->header;
+                range_msg.min_range = min_range_;
+                range_msg.max_range = max_range_;
+                range_msg.field_of_view = 60.0/180.0*M_PI;
+                range_msg.range = altitude;
+                range_pub_.publish(range_msg);
             }
 
             // Store

@@ -54,7 +54,7 @@ static const boost::array<double, 36> STANDARD_TWIST_COVARIANCE =
     0, 0, 0.05, 0, 0, 0,
     0, 0, 0, 0.09, 0, 0,
     0, 0, 0, 0, 0.09, 0,
-    0, 0, 0, 0, 0, 0.09 } };
+    0, 0, 0, 0, 0, 0.12 } };
 
 class ImageGrabber
 {

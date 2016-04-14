@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 
     // Get params
     nhp.param("pub_range", igb.pub_range_, true);
-    nhp.param("min_range", igb.min_range_, 1.2);
+    nhp.param("min_range", igb.min_range_, 0.8);
     nhp.param("max_range", igb.max_range_, 6.0);
 
     // Advertise

@@ -238,7 +238,7 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             {
                 geometry_msgs::PoseStamped pose_msg;
                 pose_msg.header = cv_ptr_left->header;
-                tf::poseTFToMsg(integrated_pose_, pose_msg.pose);
+                tf::poseTFToMsg(camera_pose, pose_msg.pose);
                 pose_pub_.publish(pose_msg);
             }
             return;

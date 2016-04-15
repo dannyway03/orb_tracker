@@ -112,8 +112,8 @@ int main(int argc, char **argv)
     nhp.param("max_range", igb.max_range_, 6.0);
 
     // Advertise
-    pose_pub_ = nhp.advertise<geometry_msgs::PoseStamped>("visual_odometry_pose", 1);
-    twist_pub_ = nhp.advertise<geometry_msgs::TwistWithCovarianceStamped>("visual_odometry_twist", 1);
+    pose_pub_ = nhp.advertise<geometry_msgs::PoseStamped>("pose", 1);
+    twist_pub_ = nhp.advertise<geometry_msgs::TwistWithCovarianceStamped>("twist", 1);
     if (igb.pub_range_)
         range_pub_ = nhp.advertise<sensor_msgs::Range>("altitude", 1);
 

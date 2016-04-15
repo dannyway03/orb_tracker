@@ -172,7 +172,7 @@ void Tracking::Track()
         else if (mState==LOST)
         {
             // Reset the system and return
-            cout << "[ORB_TRACKER:] Track got lost. Reseting the system..." << endl;
+            cout << "[orb_tracker]: Track got lost. Reseting the system..." << endl;
             Reset();
             return;
         }
@@ -186,7 +186,7 @@ void Tracking::Track()
         if(bOK)
             mState = OK;
         else
-            mState=LOST;
+            mState = LOST;
 
         // If tracking were good, check if we insert a keyframe
         if(bOK)
@@ -302,22 +302,30 @@ void Tracking::StereoInitialization()
             }
         }
 
-        cout << "[ORB_TRACKER:] New map created with " << mpMap->MapPointsInMap() << " points" << endl;
+        // Minimum number of points to set a map
+        if (mpMap->MapPointsInMap() < 200)
+        {
+            cout << "[orb_tracker]: Trying to create a new map, but not enough points (" << mpMap->MapPointsInMap() << " points)." << endl;
+        }
+        else
+        {
+            cout << "[orb_tracker]: New map created with " << mpMap->MapPointsInMap() << " points" << endl;
 
-        mpLocalMapper->InsertKeyFrame(pKFini);
+            mpLocalMapper->InsertKeyFrame(pKFini);
 
-        mLastFrame = Frame(mCurrentFrame);
-        mnLastKeyFrameId=mCurrentFrame.mnId;
-        mpLastKeyFrame = pKFini;
+            mLastFrame = Frame(mCurrentFrame);
+            mnLastKeyFrameId=mCurrentFrame.mnId;
+            mpLastKeyFrame = pKFini;
 
-        mvpLocalKeyFrames.push_back(pKFini);
-        mvpLocalMapPoints=mpMap->GetAllMapPoints();
-        mpReferenceKF = pKFini;
-        mCurrentFrame.mpReferenceKF = pKFini;
+            mvpLocalKeyFrames.push_back(pKFini);
+            mvpLocalMapPoints=mpMap->GetAllMapPoints();
+            mpReferenceKF = pKFini;
+            mCurrentFrame.mpReferenceKF = pKFini;
 
-        mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
+            mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
-        mState=OK;
+            mState=OK;
+        }
     }
 }
 
@@ -913,14 +921,14 @@ void Tracking::UpdateLocalKeyFrames()
 
 void Tracking::Reset()
 {
-    cout << "[ORB_TRACKER:] System Reseting" << endl;
+    cout << "[orb_tracker]: System Reseting" << endl;
 
     // Reset Local Mapping
-    cout << "[ORB_TRACKER:] Waiting for Local Mapper Reset...";
+    cout << "[orb_tracker]: Waiting for Local Mapper Reset...";
     bool notReset = mpLocalMapper->isReset();
     if(notReset)
         return;
-    cout << "[ORB_TRACKER:] Done!" << endl;
+    cout << "[orb_tracker]: Done!" << endl;
 
     // Clear Map (this erase MapPoints and KeyFrames)
     mpMap->clear();

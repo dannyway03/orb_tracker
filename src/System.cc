@@ -38,15 +38,15 @@ System::System(const string &strVocFile) : mbReset(false)
 
     // Load ORB Vocabulary
     mpVocabulary = new ORBVocabulary();
-    cout << endl << "[ORB_TRACKER:] Loading ORB Vocabulary. This could take a while..." << endl;
+    cout << endl << "[orb_tracker]: Loading ORB Vocabulary. This could take a while..." << endl;
     bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
     if(!bVocLoad)
     {
-        cerr << "[ORB_TRACKER:] Wrong path to vocabulary. " << endl;
-        cerr << "[ORB_TRACKER:] Falied to open at: " << strVocFile << endl;
+        cerr << "[orb_tracker]: Wrong path to vocabulary. " << endl;
+        cerr << "[orb_tracker]: Falied to open at: " << strVocFile << endl;
         exit(-1);
     }
-    cout << "[ORB_TRACKER:] Vocabulary loaded!" << endl << endl;
+    cout << "[orb_tracker]: Vocabulary loaded!" << endl << endl;
 
     //Create the Map
     mpMap = new Map();

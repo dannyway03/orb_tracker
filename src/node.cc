@@ -238,7 +238,7 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             {
                 geometry_msgs::PoseStamped pose_msg;
                 pose_msg.header = cv_ptr_left->header;
-                tf::poseTFToMsg(camera_pose, pose_msg.pose);
+                tf::poseTFToMsg(integrated_pose_, pose_msg.pose); // This is valid if orb_tracker never got lost!
                 pose_pub_.publish(pose_msg);
             }
             return;
@@ -246,12 +246,27 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
         else
         {
             // Orb_tracker is working
+
+            // Compute velocity
             tf::Transform delta_transform = prev_camera_pose_.inverse() * camera_pose;
-            integrated_pose_ *= delta_transform;
 
             // Get delta time
             ros::Time cur_stamp = cv_ptr_left->header.stamp;
             double delta_t = cur_stamp.toSec() - prev_stamp_.toSec();
+            double vx = delta_transform.getOrigin().getX() / delta_t;
+            double vy = delta_transform.getOrigin().getY() / delta_t;
+            double vz = delta_transform.getOrigin().getZ() / delta_t;
+
+            // Compute the absolute velocity
+            double v_abs = sqrt(vx*vx + vy*vy + vz*vz);
+            if (v_abs > 2.0)
+            {
+                ROS_WARN_STREAM("[orb_tracker]: Big velocity detected: " << v_abs << " m/s.");
+                return;
+            }
+
+            // Add to integrated pose
+            integrated_pose_ *= delta_transform;
 
             // Create the messages
             if (twist_pub_.getNumSubscribers() > 0)
@@ -259,9 +274,9 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
                 geometry_msgs::TwistWithCovarianceStamped twist_msg;
                 twist_msg.header.stamp = cv_ptr_left->header.stamp;
                 twist_msg.header.frame_id = cv_ptr_left->header.frame_id;
-                twist_msg.twist.twist.linear.x = delta_transform.getOrigin().getX() / delta_t;
-                twist_msg.twist.twist.linear.y = delta_transform.getOrigin().getY() / delta_t;
-                twist_msg.twist.twist.linear.z = delta_transform.getOrigin().getZ() / delta_t;
+                twist_msg.twist.twist.linear.x = vx;
+                twist_msg.twist.twist.linear.y = vy;
+                twist_msg.twist.twist.linear.z = vz;
                 tf::Quaternion delta_rot = delta_transform.getRotation();
                 tfScalar angle = delta_rot.getAngle();
                 tf::Vector3 axis = delta_rot.getAxis();

@@ -306,6 +306,7 @@ void Tracking::StereoInitialization()
         if (mpMap->MapPointsInMap() < 200)
         {
             cout << "[orb_tracker]: Trying to create a new map, but not enough points (" << mpMap->MapPointsInMap() << " points)." << endl;
+            mState = LOST;
         }
         else
         {

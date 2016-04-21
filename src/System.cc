@@ -30,23 +30,23 @@ namespace orb_tracker
 System::System(const string &strVocFile) : mbReset(false)
 {
     // Output welcome message
-    cout << endl <<
-    "ORB-SLAM2 Copyright (C) 2014-2016 Raul Mur-Artal, University of Zaragoza." << endl <<
-    "This program comes with ABSOLUTELY NO WARRANTY;" << endl  <<
-    "This is free software, and you are welcome to redistribute it" << endl <<
-    "under certain conditions. See LICENSE.txt." << endl << endl;
+    ROS_INFO_STREAM(
+    "ORB-SLAM2 Copyright (C) 2014-2016 Raul Mur-Artal, University of Zaragoza.\n" <<
+    "This program comes with ABSOLUTELY NO WARRANTY;\n"  <<
+    "This is free software, and you are welcome to redistribute it\n" <<
+    "under certain conditions. See LICENSE.txt.\n");
 
     // Load ORB Vocabulary
     mpVocabulary = new ORBVocabulary();
-    cout << endl << "[orb_tracker]: Loading ORB Vocabulary. This could take a while..." << endl;
+    ROS_INFO("[orb_tracker]: Loading ORB Vocabulary. This could take a while...");
     bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
     if(!bVocLoad)
     {
-        cerr << "[orb_tracker]: Wrong path to vocabulary. " << endl;
-        cerr << "[orb_tracker]: Falied to open at: " << strVocFile << endl;
+        ROS_ERROR("[orb_tracker]: Wrong path to vocabulary. ");
+        ROS_ERROR_STREAM("[orb_tracker]: Failed to open at: " << strVocFile);
         exit(-1);
     }
-    cout << "[orb_tracker]: Vocabulary loaded!" << endl << endl;
+    ROS_INFO("[orb_tracker]: Vocabulary loaded!");
 
     //Create the Map
     mpMap = new Map();

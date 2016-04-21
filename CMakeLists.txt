@@ -49,7 +49,7 @@ set(LIBS
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )
 
-add_library(lib_orb_tracjer
+add_library(lib_orb_tracker
   src/System.cc
   src/Tracking.cc
   src/LocalMapping.cc
@@ -63,8 +63,8 @@ add_library(lib_orb_tracjer
   src/PnPsolver.cc
   src/Frame.cc
 )
-target_link_libraries(lib_orb_tracjer ${LIBS})
+target_link_libraries(lib_orb_tracker ${LIBS})
 
 # ROS node
 add_executable(orb_tracker src/node.cc)
-target_link_libraries(orb_tracker lib_orb_tracjer ${LIBS})
+target_link_libraries(orb_tracker lib_orb_tracker ${LIBS})

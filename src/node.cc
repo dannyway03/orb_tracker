@@ -66,7 +66,7 @@ public:
                     const sensor_msgs::CameraInfoConstPtr& img_left_info,
                     const sensor_msgs::CameraInfoConstPtr& img_right_info);
 
-    tf::Transform integrated_pose_;
+    tf::Transform integrated_pose_; // Only valid if orb_tracker never got lost!
     bool pub_range_;
     double min_range_;
     double max_range_;
@@ -238,7 +238,7 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             {
                 geometry_msgs::PoseStamped pose_msg;
                 pose_msg.header = cv_ptr_left->header;
-                tf::poseTFToMsg(integrated_pose_, pose_msg.pose); // This is valid if orb_tracker never got lost!
+                tf::poseTFToMsg(integrated_pose_, pose_msg.pose);
                 pose_pub_.publish(pose_msg);
             }
             return;
@@ -259,7 +259,7 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
 
             // Compute the absolute velocity
             double v_abs = sqrt(vx*vx + vy*vy + vz*vz);
-            if (v_abs > 2.0)
+            if (v_abs > 1.0)
             {
                 ROS_WARN_STREAM("[orb_tracker]: Big velocity detected: " << v_abs << " m/s.");
                 return;

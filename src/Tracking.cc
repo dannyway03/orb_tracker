@@ -172,7 +172,7 @@ void Tracking::Track()
         else if (mState==LOST)
         {
             // Reset the system and return
-            cout << "[orb_tracker]: Track got lost. Reseting the system..." << endl;
+            ROS_WARN("[orb_tracker]: Track got lost. Reseting the system...");
             Reset();
             return;
         }
@@ -305,12 +305,12 @@ void Tracking::StereoInitialization()
         // Minimum number of points to set a map
         if (mpMap->MapPointsInMap() < 200)
         {
-            cout << "[orb_tracker]: Trying to create a new map, but not enough points (" << mpMap->MapPointsInMap() << " points)." << endl;
+            ROS_WARN_STREAM("[orb_tracker]: Trying to create a new map, but not enough points (" << mpMap->MapPointsInMap() << " points).");
             mState = LOST;
         }
         else
         {
-            cout << "[orb_tracker]: New map created with " << mpMap->MapPointsInMap() << " points" << endl;
+            ROS_INFO_STREAM("[orb_tracker]: New map created with " << mpMap->MapPointsInMap() << " points.");
 
             mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -532,6 +532,7 @@ bool Tracking::TrackLocalMap()
         {
             if(!mCurrentFrame.mvbOutlier[i])
             {
+                // Altitude computation
                 if (pub_range_)
                 {
                     MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
@@ -922,14 +923,12 @@ void Tracking::UpdateLocalKeyFrames()
 
 void Tracking::Reset()
 {
-    cout << "[orb_tracker]: System Reseting" << endl;
+    ROS_INFO("[orb_tracker]: System Reseting.");
 
     // Reset Local Mapping
-    cout << "[orb_tracker]: Waiting for Local Mapper Reset...";
     bool notReset = mpLocalMapper->isReset();
     if(notReset)
         return;
-    cout << "[orb_tracker]: Done!" << endl;
 
     // Clear Map (this erase MapPoints and KeyFrames)
     mpMap->clear();

@@ -538,7 +538,14 @@ bool Tracking::TrackLocalMap()
                     MapPoint* pMP = mCurrentFrame.mvpMapPoints[i];
                     cv::Mat Ow = mCurrentFrame.GetCameraCenter();
                     cv::Mat point = pMP->GetWorldPos() - Ow;
-                    altitude.push_back(point.at<float>(2));
+
+                    if (point.at<float>(0) > -0.2 &&
+                        point.at<float>(0) <  0.2 &&
+                        point.at<float>(1) > -0.2 &&
+                        point.at<float>(1) <  0.2)
+                    {
+                        altitude.push_back(point.at<float>(2));
+                    }
                 }
 
                 mCurrentFrame.mvpMapPoints[i]->IncreaseFound();

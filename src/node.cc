@@ -259,7 +259,7 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
 
             // Compute the absolute velocity
             double v_abs = sqrt(vx*vx + vy*vy + vz*vz);
-            if (v_abs > 1.0)
+            if (v_abs > 1.5)
             {
                 ROS_WARN_STREAM("[orb_tracker]: Big velocity detected: " << v_abs << " m/s.");
                 return;

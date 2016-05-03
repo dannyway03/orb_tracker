@@ -542,7 +542,9 @@ bool Tracking::TrackLocalMap()
                     if (point.at<float>(0) > -0.2 &&
                         point.at<float>(0) <  0.2 &&
                         point.at<float>(1) > -0.2 &&
-                        point.at<float>(1) <  0.2)
+                        point.at<float>(1) <  0.2 &&
+                        point.at<float>(2) >  0.8 &&
+                        point.at<float>(2) <  4.5)
                     {
                         altitude.push_back(point.at<float>(2));
                     }

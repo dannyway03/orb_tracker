@@ -33,7 +33,7 @@
 #include <tf/transform_datatypes.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Odometry.h>
 #include <geometry_msgs/TwistWithCovarianceStamped.h>
 #include <sensor_msgs/Range.h>
 
@@ -44,7 +44,7 @@
 
 using namespace std;
 
-ros::Publisher pose_pub_;
+ros::Publisher odom_pub_;
 ros::Publisher twist_pub_;
 ros::Publisher range_pub_;
 
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     nhp.param("max_range", igb.max_range_, 6.0);
 
     // Advertise
-    pose_pub_ = nhp.advertise<geometry_msgs::PoseStamped>("pose", 1);
+    odom_pub_ = nhp.advertise<nav_msgs::Odometry>("odometry", 1);
     twist_pub_ = nhp.advertise<geometry_msgs::TwistWithCovarianceStamped>("twist", 1);
     if (igb.pub_range_)
         range_pub_ = nhp.advertise<sensor_msgs::Range>("altitude", 1);
@@ -232,15 +232,6 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             prev_camera_pose_ = camera_pose;
             prev_stamp_ = cv_ptr_left->header.stamp;
             is_pose_init_ = true;
-
-            // Publish the pose only
-            if (pose_pub_.getNumSubscribers() > 0)
-            {
-                geometry_msgs::PoseStamped pose_msg;
-                pose_msg.header = cv_ptr_left->header;
-                tf::poseTFToMsg(integrated_pose_, pose_msg.pose);
-                pose_pub_.publish(pose_msg);
-            }
             return;
         }
         else
@@ -269,9 +260,9 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             integrated_pose_ *= delta_transform;
 
             // Create the messages
-            if (twist_pub_.getNumSubscribers() > 0)
+            geometry_msgs::TwistWithCovarianceStamped twist_msg;
+            if (twist_pub_.getNumSubscribers() > 0 || odom_pub_.getNumSubscribers() > 0)
             {
-                geometry_msgs::TwistWithCovarianceStamped twist_msg;
                 twist_msg.header.stamp = cv_ptr_left->header.stamp;
                 twist_msg.header.frame_id = cv_ptr_left->header.frame_id;
                 twist_msg.twist.twist.linear.x = vx;
@@ -287,13 +278,16 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
                 twist_msg.twist.covariance = STANDARD_TWIST_COVARIANCE;
                 twist_pub_.publish(twist_msg);
             }
-            if (pose_pub_.getNumSubscribers() > 0)
+            if (odom_pub_.getNumSubscribers() > 0)
             {
-                geometry_msgs::PoseStamped pose_msg;
-                pose_msg.header.stamp = cv_ptr_left->header.stamp;
-                pose_msg.header.frame_id = cv_ptr_left->header.frame_id;
+                geometry_msgs::PoseWithCovariance pose_msg;
                 tf::poseTFToMsg(integrated_pose_, pose_msg.pose);
-                pose_pub_.publish(pose_msg);
+                nav_msgs::Odometry odom_msg;
+                odom_msg.header.stamp = cv_ptr_left->header.stamp;
+                odom_msg.header.frame_id = cv_ptr_left->header.frame_id;
+                odom_msg.pose = pose_msg;
+                odom_msg.twist = twist_msg.twist;
+                odom_pub_.publish(odom_msg);
             }
 
             // Publish altitude

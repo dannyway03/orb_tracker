@@ -285,6 +285,7 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
                 nav_msgs::Odometry odom_msg;
                 odom_msg.header.stamp = cv_ptr_left->header.stamp;
                 odom_msg.header.frame_id = cv_ptr_left->header.frame_id;
+                odom_msg.child_frame_id = cv_ptr_left->header.frame_id;
                 odom_msg.pose = pose_msg;
                 odom_msg.twist = twist_msg.twist;
                 odom_pub_.publish(odom_msg);

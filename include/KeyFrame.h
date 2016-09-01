@@ -28,6 +28,7 @@
 #include "ORBextractor.h"
 #include "Frame.h"
 
+#include <set>
 #include <mutex>
 
 namespace orb_tracker

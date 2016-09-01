@@ -30,21 +30,21 @@ else()
    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-find_package(OpenCV 2.4.3 REQUIRED)
-find_package(Eigen REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 catkin_package()
 
 include_directories(include
   ${PROJECT_SOURCE_DIR}
   ${catkin_INCLUDE_DIRS}
-  ${Eigen_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS})
 
 set(LIBS
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
-  ${Eigen_LIBS}
+  ${EIGEN3_LIBS}
   ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
   ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
 )

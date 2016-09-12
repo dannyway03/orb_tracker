@@ -1,1 +1,0 @@
-/home/plnegre/workspace/ros/turbot/src/ORB_SLAM2/Thirdparty/g2o/build/CMakeFiles/g2o.dir

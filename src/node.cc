@@ -103,8 +103,8 @@ int main(int argc, char **argv)
 
     // Get params
     nhp.param("pub_range", igb.pub_range_, true);
-    nhp.param("min_range", igb.min_range_, 0.8);
-    nhp.param("max_range", igb.max_range_, 6.0);
+    nhp.param("min_range", igb.min_range_, 0.7);
+    nhp.param("max_range", igb.max_range_, 5.0);
 
     // Advertise
     twist_pub_ = nhp.advertise<geometry_msgs::TwistWithCovarianceStamped>("twist", 1);

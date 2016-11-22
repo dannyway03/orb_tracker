@@ -44,7 +44,6 @@
 
 using namespace std;
 
-ros::Publisher odom_pub_;
 ros::Publisher twist_pub_;
 ros::Publisher range_pub_;
 
@@ -66,7 +65,6 @@ public:
                     const sensor_msgs::CameraInfoConstPtr& img_left_info,
                     const sensor_msgs::CameraInfoConstPtr& img_right_info);
 
-    tf::Transform integrated_pose_; // Only valid if orb_tracker never got lost!
     bool pub_range_;
     double min_range_;
     double max_range_;
@@ -100,9 +98,6 @@ int main(int argc, char **argv)
 
     ImageGrabber igb(&system);
 
-    // Init the integrated pose
-    igb.integrated_pose_.setIdentity();
-
     ros::NodeHandle nh;
     ros::NodeHandle nhp("~");
 
@@ -112,7 +107,6 @@ int main(int argc, char **argv)
     nhp.param("max_range", igb.max_range_, 6.0);
 
     // Advertise
-    odom_pub_ = nhp.advertise<nav_msgs::Odometry>("odometry", 1);
     twist_pub_ = nhp.advertise<geometry_msgs::TwistWithCovarianceStamped>("twist", 1);
     if (igb.pub_range_)
         range_pub_ = nhp.advertise<sensor_msgs::Range>("altitude", 1);
@@ -198,7 +192,10 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
 
     // Compute camera pose
     float altitude = -1.0;
-    cv::Mat Tcw = system_->TrackStereo(cv_ptr_left->image, cv_ptr_right->image, cv_ptr_left->header.stamp.toSec(), altitude);
+    cv::Mat Tcw = system_->TrackStereo(cv_ptr_left->image,
+                                       cv_ptr_right->image,
+                                       cv_ptr_left->header.stamp.toSec(),
+                                       altitude);
 
     // When system got lost, correct with the input odometry (if any)
     if (Tcw.rows == 0 || Tcw.cols == 0)
@@ -248,20 +245,9 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
             double vy = delta_transform.getOrigin().getY() / delta_t;
             double vz = delta_transform.getOrigin().getZ() / delta_t;
 
-            // Compute the absolute velocity
-            double v_abs = sqrt(vx*vx + vy*vy + vz*vz);
-            if (v_abs > 1.5)
-            {
-                ROS_WARN_STREAM("[orb_tracker]: Big velocity detected: " << v_abs << " m/s.");
-                return;
-            }
-
-            // Add to integrated pose
-            integrated_pose_ *= delta_transform;
-
             // Create the messages
             geometry_msgs::TwistWithCovarianceStamped twist_msg;
-            if (twist_pub_.getNumSubscribers() > 0 || odom_pub_.getNumSubscribers() > 0)
+            if (twist_pub_.getNumSubscribers() > 0)
             {
                 twist_msg.header.stamp = cv_ptr_left->header.stamp;
                 twist_msg.header.frame_id = cv_ptr_left->header.frame_id;
@@ -277,18 +263,6 @@ void ImageGrabber::grabStereo(const sensor_msgs::ImageConstPtr& img_left_rect,
                 twist_msg.twist.twist.angular.z = angular_twist.z();
                 twist_msg.twist.covariance = STANDARD_TWIST_COVARIANCE;
                 twist_pub_.publish(twist_msg);
-            }
-            if (odom_pub_.getNumSubscribers() > 0)
-            {
-                geometry_msgs::PoseWithCovariance pose_msg;
-                tf::poseTFToMsg(integrated_pose_, pose_msg.pose);
-                nav_msgs::Odometry odom_msg;
-                odom_msg.header.stamp = cv_ptr_left->header.stamp;
-                odom_msg.header.frame_id = cv_ptr_left->header.frame_id;
-                odom_msg.child_frame_id = cv_ptr_left->header.frame_id;
-                odom_msg.pose = pose_msg;
-                odom_msg.twist = twist_msg.twist;
-                odom_pub_.publish(odom_msg);
             }
 
             // Publish altitude

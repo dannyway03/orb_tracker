@@ -30,7 +30,7 @@ else()
    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3.2 REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 catkin_package()

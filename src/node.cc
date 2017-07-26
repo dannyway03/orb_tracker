@@ -150,8 +150,10 @@ cv::Mat ImageGrabber::getCameraModel(sensor_msgs::CameraInfo l_info_msg,
     {
         camera_matrix.at<float>(0,0) = camera_matrix.at<float>(0,0) / binning_x;
         camera_matrix.at<float>(0,2) = camera_matrix.at<float>(0,2) / binning_x;
+        camera_matrix.at<float>(0,3) = camera_matrix.at<float>(0,3) / binning_x;
         camera_matrix.at<float>(1,1) = camera_matrix.at<float>(1,1) / binning_y;
         camera_matrix.at<float>(1,2) = camera_matrix.at<float>(1,2) / binning_y;
+        camera_matrix.at<float>(1,3) = camera_matrix.at<float>(1,3) / binning_y;
     }
     return camera_matrix;
 }
